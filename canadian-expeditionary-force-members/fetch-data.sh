@@ -1,16 +1,19 @@
 #!/bin/bash 
 set -x
+set -e
 
-#wget http://www.collectionscanada.gc.ca/obj/900/f11/001042_20141124.xml records.xml
+echo -ne "Downloading records..."
+wget http://www.collectionscanada.gc.ca/obj/900/f11/001042_20141124.xml records.xml
+
+echo -ne "Converting from UTF-16 to UTF-8..."
 mkdir tmp
-
-# Convert the file to from UTF-16 UTF-8
 iconv -f utf-16 -t utf-8 records.xml > tmp/utf8-records.xml
 cd tmp
 
 # Remove the root node
 # Note: OS X requires a backup file name with -i, hence the empty string
 # http://stackoverflow.com/questions/7573368/in-place-edits-with-sed-on-os-x
+echo -ne "Splitting XML into smaller chunks..."
 sed -i '' 's/^\<CEF_Data\>//' utf8-records.xml
 sed -i '' 's/\<\/CEF_Data\>$//' utf8-records.xml
 
@@ -34,8 +37,10 @@ for file in *; do
     mv /tmp/tmpfile.$$ "$file"
 done
 
-# Save each record to the database
+echo "Moving records to database:"
 cd ../..
 for file in tmp/split-records/*; do
     python parse-data.py "$file"
 done
+
+echo "Done."

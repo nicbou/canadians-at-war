@@ -4,6 +4,7 @@ import xml.etree.ElementTree as etree
 import sys
 from datetime import datetime, timedelta
 import psycopg2
+from date_parser import parse_date
 
 
 def save_person(person):
@@ -13,8 +14,11 @@ def save_person(person):
         'reference_fr': person.get('reference_fr'),
         'surname': person.get('surname'),
         'given_name': person.get('given_name'),
-        'birth_date1': person['birthdates'][0] if len(person['birthdates']) > 0 else None,
-        'birth_date2': person['birthdates'][1] if len(person['birthdates']) > 1 else None,
+        'birth_date1': person['raw_birthdates'][0] if len(person['raw_birthdates']) > 0 else None,
+        'birth_date2': person['raw_birthdates'][1] if len(person['raw_birthdates']) > 1 else None,
+        'birth_date_year': person['birthdates'][0].get('year') if len(person['birthdates']) > 0 else None,
+        'birth_date_month': person['birthdates'][0].get('month') if len(person['birthdates']) > 0 else None,
+        'birth_date_day': person['birthdates'][0].get('day') if len(person['birthdates']) > 0 else None,
         'regiment_nr1': person['regimental_numbers'][0] if len(person['regimental_numbers']) > 0 else None,
         'regiment_nr2': person['regimental_numbers'][1] if len(person['regimental_numbers']) > 1 else None,
         'regiment_nr3': person['regimental_numbers'][2] if len(person['regimental_numbers']) > 2 else None,
@@ -26,10 +30,12 @@ def save_person(person):
     cursor.execute(
         """
             INSERT INTO people (
-                id, birth_date1, regiment_nr1, regiment_nr2, regiment_nr3, reference_en, reference_fr, document_number, given_name, surname, image1, image2, image3
+                id, birth_date1, regiment_nr1, regiment_nr2, regiment_nr3, reference_en, reference_fr, document_number,
+                given_name, surname, image1, image2, image3
             )
             VALUES (
-                %(id)s, %(birth_date1)s, %(regiment_nr1)s, %(regiment_nr2)s, %(regiment_nr3)s, %(reference_en)s, %(reference_fr)s, %(document_number)s, %(given_name)s, %(surname)s, %(image1)s, %(image2)s, %(image3)s
+                %(id)s, %(birth_date1)s, %(regiment_nr1)s, %(regiment_nr2)s, %(regiment_nr3)s, %(reference_en)s,
+                %(reference_fr)s, %(document_number)s, %(given_name)s, %(surname)s, %(image1)s, %(image2)s, %(image3)s
             )
         """,
         format
@@ -64,7 +70,10 @@ for event, elem in etree.iterparse(filename, events=('end',)):
         if elem.tag == 'RegimentalNumber':
             person['regimental_numbers'].append(elem.text)
         elif elem.tag == 'BirthDate':
-            person['birthdates'].append(elem.text)
+            raw_date = elem.text
+            parsed_date = parse_date(raw_date)
+            person['raw_birthdates'].append(raw_date)
+            person['birthdates'].append(parsed_date)
         elif elem.tag == 'ReferenceEn':
             person['reference_en'] = elem.text
         elif elem.tag == 'ReferenceFr':
@@ -80,6 +89,7 @@ for event, elem in etree.iterparse(filename, events=('end',)):
         elif elem.tag == 'PersonID':  # New person
             person = {
                 'birthdates': [],
+                'raw_birthdates': [],
                 'regimental_numbers': [],
                 'images': [],
             }

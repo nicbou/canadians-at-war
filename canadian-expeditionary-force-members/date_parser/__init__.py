@@ -164,43 +164,8 @@ def parse_date(date_string):
 
     best_year_raw, best_year_parsed, best_year_reliable = find_best_year(date_parts)
 
-    # When the best year is very likely to be a month. e.g. '/02/'
-    if len(best_year_raw) <= 2 and best_year_raw <= 31:
-        return best_year_raw, None, False
-
-    return best_year_raw, best_year_parsed, best_year_reliable
-
-assert get_int('1') == (1, True)
-assert get_int('012') == (12, True)
-assert get_int('234') == (234, True)
-assert get_int('1938 (39)') == (1938, False)
-assert get_int('1938(39)') == (1938, False)
-assert get_int('potato') == (None, False)
-assert get_int('0') == (None, False)
-assert get_int('0000') == (None, False)
-assert get_int('00') == (None, False)
-
-assert get_year('0') == (None, False)
-assert get_year('00') == (None, False)
-assert get_year('000') == (None, False)
-assert get_year('880') == (1880, True)
-assert get_year('01') == (1901, False)
-assert get_year('05') == (None, False)
-assert get_year('29') == (None, False)
-assert get_year('38') == (1838, True)
-assert get_year('1901') == (1901, True)
-assert get_year('1880') == (1880, True)
-assert get_year('1906') == (None, False)
-assert get_year('1833') == (None, False)
-assert get_year('188006') == (1880, True)
-assert get_year('061880') == (1880, True)
-
-assert find_best_year(('01', '1880', 'potato')) == ('1880', 1880, True)
-assert find_best_year(('01', '80', 'potato')) == ('80', 1880, True)
-assert find_best_year(('01', '08', 'potato')) == ('01', None, False)
-assert find_best_year(('', '', '')) == ('', None, False)
-assert find_best_year(('81', '1880', 'potato')) == ('1880', 1880, True)
-
-for line in open('dates.txt', 'r'):
-    date = parse_date(line)
-    print(line.strip().ljust(20) + (str(date[1]) if date[1] is not None else ''))
+    return {
+        'year': best_year_parsed,
+        'month': None,
+        'day': None,
+    }

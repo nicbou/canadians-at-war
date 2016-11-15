@@ -14,8 +14,7 @@ def save_person(person):
         'reference_fr': person.get('reference_fr'),
         'surname': person.get('surname'),
         'given_name': person.get('given_name'),
-        'birth_date1': person['raw_birthdates'][0] if len(person['raw_birthdates']) > 0 else None,
-        'birth_date2': person['raw_birthdates'][1] if len(person['raw_birthdates']) > 1 else None,
+        'birth_date': person['raw_birthdates'][0] if len(person['raw_birthdates']) > 0 else None,
         'birth_date_year': person['birthdates'][0].get('year') if len(person['birthdates']) > 0 else None,
         'birth_date_month': person['birthdates'][0].get('month') if len(person['birthdates']) > 0 else None,
         'birth_date_day': person['birthdates'][0].get('day') if len(person['birthdates']) > 0 else None,
@@ -30,12 +29,13 @@ def save_person(person):
     cursor.execute(
         """
             INSERT INTO people (
-                id, birth_date1, regiment_nr1, regiment_nr2, regiment_nr3, reference_en, reference_fr, document_number,
-                given_name, surname, image1, image2, image3
+                id, birth_date, regiment_nr1, regiment_nr2, regiment_nr3, reference_en, reference_fr, document_number,
+                given_name, surname, image1, image2, image3, birth_date_year, birth_date_month, birth_date_day
             )
             VALUES (
-                %(id)s, %(birth_date1)s, %(regiment_nr1)s, %(regiment_nr2)s, %(regiment_nr3)s, %(reference_en)s,
-                %(reference_fr)s, %(document_number)s, %(given_name)s, %(surname)s, %(image1)s, %(image2)s, %(image3)s
+                %(id)s, %(birth_date)s, %(regiment_nr1)s, %(regiment_nr2)s, %(regiment_nr3)s, %(reference_en)s,
+                %(reference_fr)s, %(document_number)s, %(given_name)s, %(surname)s, %(image1)s, %(image2)s, %(image3)s,
+                %(birth_date_year)s, %(birth_date_month)s, %(birth_date_day)s
             )
         """,
         format

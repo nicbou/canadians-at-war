@@ -1,19 +1,17 @@
 #!/bin/bash 
-set -x
-set -e
 
-echo -ne "Downloading records..."
-wget http://www.collectionscanada.gc.ca/obj/900/f11/001042_20141124.xml records.xml
-
-echo -ne "Converting from UTF-16 to UTF-8..."
-mkdir tmp
-iconv -f utf-16 -t utf-8 records.xml > tmp/utf8-records.xml
+mkdir -p tmp
 cd tmp
+echo "Downloading records..."
+wget -nc http://www.collectionscanada.gc.ca/obj/900/f11/001042_20141124.xml -O original-records.xml
+
+echo "Converting from UTF-16 to UTF-8..."
+iconv -f utf-16 -t utf-8 original-records.xml > utf8-records.xml
 
 # Remove the root node
 # Note: OS X requires a backup file name with -i, hence the empty string
 # http://stackoverflow.com/questions/7573368/in-place-edits-with-sed-on-os-x
-echo -ne "Splitting XML into smaller chunks..."
+echo "Splitting XML into smaller chunks..."
 sed -i '' 's/^\<CEF_Data\>//' utf8-records.xml
 sed -i '' 's/\<\/CEF_Data\>$//' utf8-records.xml
 

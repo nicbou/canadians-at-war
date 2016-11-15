@@ -5,7 +5,9 @@ max_year = 1903  # 15 years old in 1918
 
 
 def get_int(string):
-    """Returns a (year, is_reliable) tuple. is_reliable is only true if parsing a string that matches \d+"""
+    """
+    Returns a (year, is_reliable) tuple. is_reliable is only true if parsing a string that is 100% a positive integer.
+    """
     string = string.strip()
 
     # 1889 (90). Means the person could be born in either 1889 or 1890. We return the first one, and mark it as
@@ -22,13 +24,22 @@ def get_int(string):
         # TODO: What about 1900?
         if number < 0:
             return None, False
-        # 00 > 1900 is not reliable enough, since zeros are used as placeholder characters (0000-00-00)
-        elif number == 0:
-            return None, False
         else:
             return number, True
     except:
         return None, False
+
+
+def get_month(string):
+    """
+    Tries to parse the month out of a given date part. Returns a (month, is_reliable) tuple.
+    """
+    parsed_year, is_reliable = get_int(string)
+
+    if parsed_year <= 0 or parsed_year > 12:
+        return None, False
+
+    return parsed_year, is_reliable
 
 
 def get_year(string):
@@ -40,6 +51,10 @@ def get_year(string):
     parsed_year_len = len(str(parsed_year))
 
     if parsed_year is None:
+        return None, False
+
+    # 0 is used as a placeholder character in this dataset. 0000 or 00 does not equal 1900.
+    if parsed_year == 0:
         return None, False
 
     if len(string) == 2:
@@ -99,6 +114,11 @@ def get_year(string):
 
 
 def find_best_year(date_parts):
+    """
+    Finds the best candidate for a year value in a tuple of date parts
+
+    Returns (raw_year, parsed_year, is_reliable). If the year should not be used, parsed_year is None.
+    """
     parsed_parts = [get_year(part) for part in date_parts]
     parts_as_years, parts_are_reliable_years = zip(*parsed_parts)
     parsed_parts = zip(date_parts, parts_as_years, parts_are_reliable_years)
@@ -151,6 +171,58 @@ def find_best_year(date_parts):
     return best_year
 
 
+def find_best_month(date_parts, best_year):
+    """
+    Finds the best candidate for a month value in a tuple of date parts
+
+    Returns (raw_month, parsed_month, is_reliable). If the month should not be used, parsed_month is None.
+    """
+    best_year_raw, best_year_parsed, best_year_reliable = best_year
+
+    date_parts.remove(best_year_raw)
+
+    parsed_parts = [get_month(part) for part in date_parts]
+    if parsed_parts:
+        parts_as_months, parts_are_reliable_months = zip(*parsed_parts)
+    else:
+        return None, None, False
+
+    parsed_parts = zip(date_parts, parts_as_months, parts_are_reliable_months)
+
+    def month_comparer(a, b):
+        a_raw, a_parsed, a_is_reliable = a
+        b_raw, b_parsed, b_is_reliable = b
+
+        # Valid > Invalid
+        if a_parsed is None and b_parsed is None:
+            return 0
+        elif a_parsed is None:
+            return 1
+        elif b_parsed is None:
+            return -1
+
+        # Reliable > Unreliable
+        if a_is_reliable > b_is_reliable:
+            return -1
+        elif a_is_reliable == b_is_reliable:
+            return 0
+        elif a_is_reliable < b_is_reliable:
+            return 1
+
+    possible_months = [part for part in parsed_parts if part[1] and part[1] <= 12]
+    if len(possible_months) == 0:  # 1889 or 29/1889 or 29/00/1889 or 29/??/1889
+        return None, None, False
+    elif len(possible_months) == len(parsed_parts) == 1:  # 08/1889
+        return possible_months[0]
+    elif len(parsed_parts) == 2 and all([part[1] == possible_months[0][1] for part in possible_months]):  # 01/01
+        return possible_months[0]
+    else:
+        return None, None, False
+
+    best_month = sorted(parsed_parts, cmp=month_comparer)[0]
+    best_month_raw, best_month_parsed, best_month_reliable = best_month
+
+
 def parse_date(date_string):
     date_string = date_string.strip().lower()  # Lowercase because some parts contain plain english months
 
@@ -162,10 +234,22 @@ def parse_date(date_string):
 
     date_parts = date_string.strip('/').split('/')
 
-    best_year_raw, best_year_parsed, best_year_reliable = find_best_year(date_parts)
+    best_year = find_best_year(date_parts)
+    best_year_raw, best_year_parsed, best_year_reliable = best_year
+
+    # If the year is not reliable, nothing is.
+    if best_year_parsed is None:
+        return {
+            'year': None,
+            'month': None,
+            'day': None,
+        }
+
+    best_month = find_best_month(date_parts, best_year)
+    best_month_raw, best_month_parsed, best_month_reliable = best_month
 
     return {
         'year': best_year_parsed,
-        'month': None,
+        'month': best_month_parsed,
         'day': None,
     }

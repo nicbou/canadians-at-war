@@ -28,7 +28,7 @@ def save_person(person):
     }
     cursor.execute(
         """
-            INSERT INTO people (
+            INSERT INTO cef_enlistees (
                 id, birth_date, regiment_nr1, regiment_nr2, regiment_nr3, reference_en, reference_fr, document_number,
                 given_name, surname, image1, image2, image3, birth_date_year, birth_date_month, birth_date_day
             )

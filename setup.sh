@@ -3,11 +3,11 @@
 cd "$(dirname "$0")";
 
 # Set up the database
-echo "SETTING UP DATABASE"
+printf "\e[42m SETTING UP DATABASE \e[0m\n"
 cat database-schema.sql | psql --quiet
 
-echo "LOADING THE CANADIAN EXPEDITIONARY FORCE DATASET"
+printf "\e[42m LOADING THE CANADIAN EXPEDITIONARY FORCE DATASET \e[0m\n"
 ./canadian-expeditionary-force-members/setup.sh
 
-echo "LOADING THE COMMONWEALTH WAR GRAVES COMMISSION DATASET"
+printf "\e[42m LOADING THE COMMONWEALTH WAR GRAVES COMMISSION DATASET \e[0m\n"
 ./commonwealth-war-graves-commission/setup.sh

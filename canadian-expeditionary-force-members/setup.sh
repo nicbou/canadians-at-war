@@ -51,7 +51,7 @@ fi
 echo "Parsing records and saving them to database..."
 cd ..
 for file in tmp/split-records/*; do
-    echo "Parsing records from $file..."
+    echo "    Parsing records from $file..."
     python parse-data.py "$file"
 done
 

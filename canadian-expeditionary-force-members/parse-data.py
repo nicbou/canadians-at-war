@@ -1,104 +1,132 @@
 # Parses records from the Canadian Expeditionary Force dataset and saves them to the database.
-
 import xml.etree.ElementTree as etree
 import sys
-from datetime import datetime, timedelta
 import psycopg2
 from date_parser import parse_date
 
 
-def save_person(person):
-    format = {
-        'id': person['id'],
-        'reference_en': person.get('reference_en'),
-        'reference_fr': person.get('reference_fr'),
-        'surname': person.get('surname'),
-        'given_name': person.get('given_name'),
-        'birth_date': person['raw_birthdates'][0] if len(person['raw_birthdates']) > 0 else None,
-        'birth_date_year': person['birthdates'][0].get('year') if len(person['birthdates']) > 0 else None,
-        'birth_date_month': person['birthdates'][0].get('month') if len(person['birthdates']) > 0 else None,
-        'birth_date_day': person['birthdates'][0].get('day') if len(person['birthdates']) > 0 else None,
-        'regiment_nr1': person['regimental_numbers'][0] if len(person['regimental_numbers']) > 0 else None,
-        'regiment_nr2': person['regimental_numbers'][1] if len(person['regimental_numbers']) > 1 else None,
-        'regiment_nr3': person['regimental_numbers'][2] if len(person['regimental_numbers']) > 2 else None,
-        'image1': person['images'][0] if len(person['images']) > 0 else None,
-        'image2': person['images'][1] if len(person['images']) > 1 else None,
-        'image3': person['images'][2] if len(person['images']) > 2 else None,
-        'document_number': person.get('document_number'),
+def save_enlistee(enlistee):
+    enlistee_format = {
+        'dataset_id': enlistee['dataset_id'],
+        'reference_en': enlistee.get('reference_en'),
+        'reference_fr': enlistee.get('reference_fr'),
+        'surname': enlistee.get('surname'),
+        'given_name': enlistee.get('given_name'),
+        'document_number': enlistee.get('document_number'),
     }
+
     cursor.execute(
         """
             INSERT INTO cef_enlistees (
-                id, birth_date, regiment_nr1, regiment_nr2, regiment_nr3, reference_en, reference_fr, document_number,
-                given_name, surname, image1, image2, image3, birth_date_year, birth_date_month, birth_date_day
+                dataset_id, reference_en, reference_fr, document_number, given_name, surname
             )
             VALUES (
-                %(id)s, %(birth_date)s, %(regiment_nr1)s, %(regiment_nr2)s, %(regiment_nr3)s, %(reference_en)s,
-                %(reference_fr)s, %(document_number)s, %(given_name)s, %(surname)s, %(image1)s, %(image2)s, %(image3)s,
-                %(birth_date_year)s, %(birth_date_month)s, %(birth_date_day)s
+                %(dataset_id)s, %(reference_en)s, %(reference_fr)s, %(document_number)s,
+                %(given_name)s, %(surname)s
             )
+            RETURNING id
         """,
-        format
+        enlistee_format
     )
+    row_id = cursor.fetchone()[0]
 
+    for birthdate in zip(enlistee['raw_birthdates'], enlistee['birthdates']):
+        birthdate_format = {
+            'cef_enlistees_id': row_id,
+            'raw_date': birthdate[0],
+            'year': birthdate[1]['year'],
+            'month': birthdate[1]['month'],
+            'day': birthdate[1]['day'],
+        }
+        cursor.execute(
+            """
+            INSERT INTO cef_enlistees_birth_dates (
+                cef_enlistees_id, raw_date, year, month, day
+            )
+            VALUES (
+                %(cef_enlistees_id)s, %(raw_date)s, %(year)s, %(month)s, %(day)s
+            )
+            """,
+            birthdate_format
+        )
 
-def print_progress(start, records_parsed):
-    if records_parsed % 250 == 0:
-        elapsed = datetime.now() - start
-        formatted_elapsed = str(elapsed).split('.')[0]
-        output = "{0}, {1} records parsed".format(formatted_elapsed, records_parsed)
-        print(output)
-        sys.stdout.write("\033[F")
-    pass
+    for regimental_number in enlistee['regimental_numbers']:
+        regimental_number_format = {
+            'cef_enlistees_id': row_id,
+            'regimental_number': regimental_number,
+        }
+        cursor.execute(
+            """
+            INSERT INTO cef_enlistees_regimental_numbers (
+                cef_enlistees_id, regimental_number
+            )
+            VALUES (
+                %(cef_enlistees_id)s, %(regimental_number)s
+            )
+            """,
+            regimental_number_format
+        )
+
+    for image in enlistee['images']:
+        image_format = {
+            'cef_enlistees_id': row_id,
+            'url': image,
+        }
+        cursor.execute(
+            """
+            INSERT INTO cef_enlistees_images (
+                cef_enlistees_id, url
+            )
+            VALUES (
+                %(cef_enlistees_id)s, %(url)s
+            )
+            """,
+            image_format
+        )
 
 
 # This file is a flat list of XML elements under a <CEF_Data> node. Fortunately, they're ordered.
-# PersonId is the first element for each record.
-person = {}
-root_elem = None
+# EnlisteeId is the first element for each record.
+enlistee = {}
 ignored_tags = ('CEF_Data', 'Reference', 'RegimentalNumberList', 'BirthDateList', 'DigitizeList')
 filename = sys.argv[1]
-start = datetime.now()
-records_parsed = 0
 
 conn = psycopg2.connect("dbname='canadiansatwar' user='nicolas' host='localhost' password=''")
 cursor = conn.cursor()
-cursor.execute('BEGIN')
 
+cursor.execute('BEGIN')
 for event, elem in etree.iterparse(filename, events=('end',)):
-    if elem.tag not in ignored_tags:
+    if elem.tag not in ignored_tags and elem.text:
         if elem.tag == 'RegimentalNumber':
-            person['regimental_numbers'].append(elem.text)
+            enlistee['regimental_numbers'].append(elem.text.strip())
         elif elem.tag == 'BirthDate':
             raw_date = elem.text
             parsed_date = parse_date(raw_date)
-            person['raw_birthdates'].append(raw_date)
-            person['birthdates'].append(parsed_date)
+            enlistee['raw_birthdates'].append(raw_date)
+            enlistee['birthdates'].append(parsed_date)
         elif elem.tag == 'ReferenceEn':
-            person['reference_en'] = elem.text
+            enlistee['reference_en'] = elem.text.strip()
         elif elem.tag == 'ReferenceFr':
-            person['reference_fr'] = elem.text
+            enlistee['reference_fr'] = elem.text.strip()
         elif elem.tag == 'DocumentNumber':
-            person['document_number'] = elem.text
+            enlistee['document_number'] = elem.text.strip()
         elif elem.tag == 'Surname':
-            person['surname'] = elem.text
+            enlistee['surname'] = elem.text.strip()
         elif elem.tag == 'GivenName':
-            person['given_name'] = elem.text
+            enlistee['given_name'] = elem.text.strip()
         elif elem.tag == 'Image':
-            person['images'].append(elem.text)
-        elif elem.tag == 'PersonID':  # New person
-            person = {
+            enlistee['images'].append(elem.text.strip())
+        elif elem.tag == 'PersonID':  # New enlistee
+            enlistee = {
                 'birthdates': [],
                 'raw_birthdates': [],
                 'regimental_numbers': [],
                 'images': [],
             }
-            person['id'] = elem.text
+            enlistee['dataset_id'] = elem.text.strip()
         else:
             print('unexpected tag: {0}'.format(elem))
-    elif elem.tag == 'DigitizeList':  # Last tag for each person. This means we're done with that person
-        records_parsed += 1
-        print_progress(start, records_parsed)
-        save_person(person)
+    elif elem.tag == 'DigitizeList':  # Last tag for each enlistee. This means we're done with that enlistee
+        save_enlistee(enlistee)
 
 cursor.execute('COMMIT')

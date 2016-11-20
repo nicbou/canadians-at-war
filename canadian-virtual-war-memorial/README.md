@@ -12,4 +12,4 @@ Canadian Online War Memorial.
 * The root URL for cemetary image files is http://www.virtualmemorial.gc.ca/cm_image/
 * The root URL for main image files is unknown
 
-http://open.canada.ca/data/en/dataset/089fc8e5-1340-4e8a-a7e4-f6eb320a5b6e
+Source: http://open.canada.ca/data/en/dataset/089fc8e5-1340-4e8a-a7e4-f6eb320a5b6e (URL for first 500 results)

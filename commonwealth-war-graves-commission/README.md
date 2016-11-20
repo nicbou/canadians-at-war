@@ -13,3 +13,7 @@ Commission.
 
 Source: http://cwgc.org/find-war-dead.aspx (criteria: First World War, Canadian
 Forces)
+
+The CWGC is an ASP.NET WebForms website that makes it nearly impossible to
+fetch the data with curl, so a copy of the data set is included in this
+repository.

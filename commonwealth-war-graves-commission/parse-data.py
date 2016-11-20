@@ -2,7 +2,7 @@
 
 import xml.etree.ElementTree as etree
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 import psycopg2
 import csv
 import json
@@ -34,8 +34,6 @@ cursor = conn.cursor()
 cursor.execute('BEGIN')
 
 filename = sys.argv[1]
-start = datetime.now()
-records_parsed = 0
 
 
 def save_war_grave(war_grave):
@@ -43,16 +41,6 @@ def save_war_grave(war_grave):
         insert_query,
         war_grave
     )
-
-
-def print_progress(start, records_parsed):
-    if records_parsed % 250 == 0:
-        elapsed = datetime.now() - start
-        formatted_elapsed = str(elapsed).split('.')[0]
-        output = "{0}, {1} records parsed".format(formatted_elapsed, records_parsed)
-        print(output)
-        sys.stdout.write("\033[F")
-    pass
 
 
 with open(filename, 'r') as csvfile:
@@ -72,9 +60,6 @@ with open(filename, 'r') as csvfile:
             war_grave[field] = datetime(int(raw_date[6:10]), int(raw_date[3:5]), int(raw_date[0:2]))
 
         war_grave['age'] = int(war_grave['age']) if war_grave['age'] else None
-
-        records_parsed += 1
-        print_progress(start, records_parsed)
         save_war_grave(war_grave)
 
 cursor.execute('COMMIT')

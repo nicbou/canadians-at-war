@@ -8,3 +8,6 @@ cat database-schema.sql | psql --quiet
 
 echo "LOADING THE CANADIAN EXPEDITIONARY FORCE DATASET"
 ./canadian-expeditionary-force-members/setup.sh
+
+echo "LOADING THE COMMONWEALTH WAR GRAVES COMMISSION DATASET"
+./commonwealth-war-graves-commission/setup.sh

@@ -48,8 +48,8 @@ with open(filename, 'r') as csvfile:
     next(csv_reader)  # Skip header
     for row in csv_reader:
         war_grave = dict(zip(ordered_column_names, row))
-        for k, v in mydict.iteritems():
-            mydict[k] = v.strip() or None
+        for k, v in war_grave.iteritems():
+            war_grave[k] = v.strip() or None
 
         # This column uses single quotes, for some reason
         if len(war_grave['servicenumberexport']) and war_grave['servicenumberexport'][0] == "'":

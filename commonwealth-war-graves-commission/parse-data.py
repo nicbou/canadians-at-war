@@ -52,12 +52,17 @@ with open(filename, 'r') as csvfile:
             war_grave[k] = v.strip() or None
 
         # This column uses single quotes, for some reason
-        if len(war_grave['servicenumberexport']) and war_grave['servicenumberexport'][0] == "'":
+        if (
+            war_grave['servicenumberexport'] and
+            len(war_grave['servicenumberexport']) and
+            war_grave['servicenumberexport'][0] == "'"
+        ):
             war_grave['servicenumberexport'] = war_grave['servicenumberexport'][1:-1].strip() or None
 
-        for field in ('date_of_death1', 'date_of_death2') and war_grave[field] is not None:
-            raw_date = war_grave[field]
-            war_grave[field] = datetime(int(raw_date[6:10]), int(raw_date[3:5]), int(raw_date[0:2]))
+        for field in ('date_of_death1', 'date_of_death2'):
+            if war_grave[field] is not None:
+                raw_date = war_grave[field]
+                war_grave[field] = datetime(int(raw_date[6:10]), int(raw_date[3:5]), int(raw_date[0:2]))
 
         war_grave['age'] = int(war_grave['age']) if war_grave['age'] else None
         save_war_grave(war_grave)

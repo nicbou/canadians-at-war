@@ -65,6 +65,10 @@ COMMENT ON EXTENSION fuzzystrmatch IS 'determine similarities and distance betwe
 
 SET search_path = public, pg_catalog;
 
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
 --
 -- Name: cef_enlistees; Type: TABLE; Schema: public; Owner: nicolas
 --
@@ -195,13 +199,52 @@ ALTER SEQUENCE cef_enlistees_regimental_numbers_id_seq OWNED BY cef_enlistees_re
 
 
 --
+-- Name: cemeteries; Type: TABLE; Schema: public; Owner: nicolas
+--
+
+CREATE TABLE cemeteries (
+    id integer NOT NULL,
+    name text,
+    country character varying(90),
+    locality character varying(90),
+    casualties_ww1 integer,
+    casualties_ww2 integer,
+    casualties_total integer
+);
+
+
+ALTER TABLE cemeteries OWNER TO nicolas;
+
+--
+-- Name: cemeteries_id_seq; Type: SEQUENCE; Schema: public; Owner: nicolas
+--
+
+CREATE SEQUENCE cemeteries_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE cemeteries_id_seq OWNER TO nicolas;
+
+--
+-- Name: cemeteries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: nicolas
+--
+
+ALTER SEQUENCE cemeteries_id_seq OWNED BY cemeteries.id;
+
+
+--
 -- Name: people; Type: TABLE; Schema: public; Owner: nicolas
 --
 
 CREATE TABLE people (
     id integer NOT NULL,
     cef_enlistees_id integer,
-    war_graves_id integer
+    war_graves_id integer,
+    online_war_memorial_id integer
 );
 
 
@@ -263,13 +306,13 @@ CREATE TABLE war_graves (
     unitshipsquadron text,
     country text,
     servicenumberexport character varying(12),
-    cemeterymemorial text,
     gravereference text,
     additional_info text,
     id integer NOT NULL,
     date_of_death1 date,
     date_of_death2 date,
-    age smallint
+    age smallint,
+    cemeteries_id integer
 );
 
 
@@ -325,6 +368,13 @@ ALTER TABLE ONLY cef_enlistees_regimental_numbers ALTER COLUMN id SET DEFAULT ne
 
 
 --
+-- Name: cemeteries id; Type: DEFAULT; Schema: public; Owner: nicolas
+--
+
+ALTER TABLE ONLY cemeteries ALTER COLUMN id SET DEFAULT nextval('cemeteries_id_seq'::regclass);
+
+
+--
 -- Name: people id; Type: DEFAULT; Schema: public; Owner: nicolas
 --
 
@@ -363,6 +413,14 @@ ALTER TABLE ONLY cef_enlistees_regimental_numbers
 
 
 --
+-- Name: cemeteries cemeteries_pkey; Type: CONSTRAINT; Schema: public; Owner: nicolas
+--
+
+ALTER TABLE ONLY cemeteries
+    ADD CONSTRAINT cemeteries_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: cef_enlistees people_pkey; Type: CONSTRAINT; Schema: public; Owner: nicolas
 --
 
@@ -384,6 +442,13 @@ ALTER TABLE ONLY people
 
 ALTER TABLE ONLY war_graves
     ADD CONSTRAINT war_graves_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cemeteries_name; Type: INDEX; Schema: public; Owner: nicolas
+--
+
+CREATE UNIQUE INDEX cemeteries_name ON cemeteries USING btree (name);
 
 
 --
@@ -409,12 +474,21 @@ ALTER TABLE ONLY cef_enlistees_birth_dates
 ALTER TABLE ONLY cef_enlistees_images
     ADD CONSTRAINT cef_enlistees_id FOREIGN KEY (cef_enlistees_id) REFERENCES cef_enlistees(id) ON DELETE CASCADE;
 
+
 --
 -- Name: cef_enlistees_regimental_numbers cef_enlistees_id; Type: FK CONSTRAINT; Schema: public; Owner: nicolas
 --
 
 ALTER TABLE ONLY cef_enlistees_regimental_numbers
     ADD CONSTRAINT cef_enlistees_id FOREIGN KEY (cef_enlistees_id) REFERENCES cef_enlistees(id) ON DELETE CASCADE;
+
+
+--
+-- Name: war_graves cemeteries_id; Type: FK CONSTRAINT; Schema: public; Owner: nicolas
+--
+
+ALTER TABLE ONLY war_graves
+    ADD CONSTRAINT cemeteries_id FOREIGN KEY (cemeteries_id) REFERENCES cemeteries(id);
 
 
 --

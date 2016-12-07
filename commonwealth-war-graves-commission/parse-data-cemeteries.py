@@ -48,3 +48,5 @@ with open(filename, 'r') as csvfile:
         save_cemetery(cemetery)
 
 cursor.execute('COMMIT')
+cursor.close()
+conn.close()

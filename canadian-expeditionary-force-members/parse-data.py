@@ -130,3 +130,5 @@ for event, elem in etree.iterparse(filename, events=('end',)):
         save_enlistee(enlistee)
 
 cursor.execute('COMMIT')
+cursor.close()
+conn.close()

@@ -24,7 +24,6 @@ ordered_column_names = (  # Ordered as they appear in the CSV file
     'gravereference',
     'additional_info',
 )
-column_count = len(ordered_column_names)
 insert_query = "INSERT INTO temp_war_graves ({0}) VALUES ({1})".format(
     ', '.join(ordered_column_names),
     ', '.join(['%({0})s'.format(c) for c in ordered_column_names])
@@ -44,8 +43,9 @@ def save_war_grave(war_grave):
 
 def create_temp_table():
     # We put it in a temp table to replace the text cemetery name by a foreign key to the cemeteries table
+    cursor.execute('DROP TABLE IF EXISTS temp_war_graves')
     cursor.execute('BEGIN')
-    cursor.execute('CREATE TEMP TABLE temp_war_graves AS SELECT * FROM war_graves')
+    cursor.execute('CREATE TEMP TABLE temp_war_graves AS SELECT * FROM war_graves LIMIT 0')
     cursor.execute('ALTER TABLE temp_war_graves ADD COLUMN cemeterymemorial TEXT')
 
 
@@ -56,7 +56,6 @@ def commit_temp_table():
             LIMIT 1
         )
     """)
-    cursor.execute('ALTER TABLE temp_war_graves DROP COLUMN cemeterymemorial')
     cursor.execute("""
         INSERT INTO war_graves (
             surname, given_name, initials, honours_awards, rank, regiment, unitshipsquadron, country,
@@ -70,6 +69,8 @@ def commit_temp_table():
         FROM temp_war_graves
     """)
     cursor.execute('COMMIT')
+    cursor.close()
+    conn.close()
 
 
 create_temp_table()

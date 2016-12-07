@@ -6,7 +6,7 @@ mkdir -p tmp
 
 records_per_file=2000  # This is for them, not for us
 
-# Get 1000 records at a time. There are about 120 000 records.
+# Get 2000 records at a time. There are about 120 000 records.
 for from in $(seq 0 $records_per_file 300000); do
     to=$(($from+$records_per_file));  # 0 to 200 does not include 200
     filename="tmp/records-${from}-${to}.json";
@@ -17,4 +17,9 @@ for from in $(seq 0 $records_per_file 300000); do
     if [ $download_size -lt 30 ]; then  # We have reached the end of pagination
         break;
     fi
+done
+
+for file in tmp/*; do
+    echo "Parsing records from $file..."
+    python parse-data.py "$file"
 done

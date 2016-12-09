@@ -24,5 +24,7 @@ Canadian Online War Memorial.
   scans of the *First World War Book of Remembrance*. Images are titled
   ww1*.jpg, where the wildcard indicates the page number in the book.
   ww1306.jpg means the soldier is listed at page 306 of the book.
+* There is a small number of duplicates in the database. A few soldiers
+  with identical information that point to the same grave are returned.
 
 Source: http://open.canada.ca/data/en/dataset/089fc8e5-1340-4e8a-a7e4-f6eb320a5b6e (URL for first 500 results)

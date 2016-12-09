@@ -11,3 +11,6 @@ printf "\e[42m LOADING THE CANADIAN EXPEDITIONARY FORCE DATASET \e[0m\n"
 
 printf "\e[42m LOADING THE COMMONWEALTH WAR GRAVES COMMISSION DATASET \e[0m\n"
 ./commonwealth-war-graves-commission/setup.sh
+
+printf "\e[42m LOADING THE CANADIAN VIRTUAL WAR MEMORIAL DATASET \e[0m\n"
+./canadian-virtual-war-memorial/setup.sh

@@ -76,13 +76,16 @@ def save_linked_tables():
 
 
 def add_cemeteries_dataset_ids():
-    """Add the missing dataset_ids in cemeteries by taking those from the CVWM dataset, which has them"""
+    """
+    Add the missing dataset_ids in cemeteries by taking those from the CVWM dataset, which has them.
+    Only 6-7 cemeteries should be updated
+    """
     for name, dataset_id in cemetery_names_to_ids.iteritems():
         cursor.execute(
             """
             UPDATE cemeteries
             SET dataset_id=%(dataset_id)s
-            WHERE name=%(name)s
+            WHERE name=%(name)s AND dataset_id IS NULL
             """,
             {'dataset_id': dataset_id, 'name': name}
         )
